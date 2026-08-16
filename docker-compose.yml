@@ -1,0 +1,42 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      APP_ENV: local
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: automotiva_tec
+      DB_USERNAME: automotiva
+      DB_PASSWORD: secret
+      REDIS_HOST: redis
+    command: sh -c "composer install && ([ -f .env ] || cp .env.example .env) && (grep -q '^APP_KEY=base64:' .env || php artisan key:generate --ansi) && php-fpm"
+
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: automotiva_tec
+      POSTGRES_USER: automotiva
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres-data:
