@@ -44,7 +44,7 @@ class OrdemServicoResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\PagamentosRelationManager::class,
         ];
     }
 

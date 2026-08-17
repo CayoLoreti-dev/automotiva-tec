@@ -5,9 +5,11 @@ namespace App\Filament\App\Resources\OrdemServicos\Schemas;
 use App\Enums\OrdemServicoStatus;
 use App\Models\Cliente;
 use App\Models\Funcionario;
+use App\Models\Produto;
 use App\Models\Servico;
 use App\Models\Veiculo;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -66,6 +68,18 @@ class OrdemServicoForm
                     ->prefix('R$')
                     ->disabled()
                     ->dehydrated(false),
+                Placeholder::make('saldo_pagamento')
+                    ->label('Pagamento')
+                    ->content(function ($record): string {
+                        if (! $record) {
+                            return 'Valor pago: R$ 0,00 / Saldo: R$ 0,00';
+                        }
+
+                        $valorPago = (float) $record->pagamentos()->sum('valor');
+                        $saldo = max((float) $record->valor_total - $valorPago, 0);
+
+                        return 'Valor pago: R$ '.number_format($valorPago, 2, ',', '.').' / Saldo: R$ '.number_format($saldo, 2, ',', '.');
+                    }),
                 Repeater::make('itens')
                     ->relationship()
                     ->schema([
@@ -103,6 +117,33 @@ class OrdemServicoForm
                             ->required(),
                     ])
                     ->columns(3)
+                    ->columnSpanFull(),
+                Repeater::make('produtos')
+                    ->label('Produtos utilizados')
+                    ->relationship()
+                    ->schema([
+                        Select::make('produto_id')
+                            ->label('Produto')
+                            ->options(fn (): array => Produto::query()
+                                ->where('loja_id', Filament::getTenant()?->getKey())
+                                ->where('ativo', true)
+                                ->orderBy('nome')
+                                ->get()
+                                ->mapWithKeys(fn (Produto $produto): array => [
+                                    $produto->id => "{$produto->nome} ({$produto->quantidade_atual} {$produto->unidade})",
+                                ])
+                                ->all())
+                            ->helperText(fn (?int $state): ?string => $state
+                                ? 'Estoque atual: '.Produto::query()->whereKey($state)->value('quantidade_atual')
+                                : null)
+                            ->searchable()
+                            ->required(),
+                        TextInput::make('quantidade_utilizada')
+                            ->numeric()
+                            ->required()
+                            ->minValue(0.01),
+                    ])
+                    ->columns(2)
                     ->columnSpanFull(),
                 Textarea::make('observacoes')
                     ->label('Observacoes')

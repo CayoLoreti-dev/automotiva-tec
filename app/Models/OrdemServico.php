@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ComissaoStatus;
 use App\Enums\OrdemServicoStatus;
 use Database\Factories\OrdemServicoFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Validation\ValidationException;
 
 #[Fillable(['loja_id', 'cliente_id', 'veiculo_id', 'funcionario_id', 'status', 'valor_total', 'observacoes', 'data_abertura', 'data_conclusao', 'data_entrega'])]
@@ -69,6 +71,8 @@ class OrdemServico extends Model
                 }
             }
         });
+
+        static::saved(fn (OrdemServico $ordemServico): mixed => $ordemServico->sincronizarComissao());
     }
 
     public function loja(): BelongsTo
@@ -96,6 +100,21 @@ class OrdemServico extends Model
         return $this->hasMany(OrdemServicoItem::class);
     }
 
+    public function produtos(): HasMany
+    {
+        return $this->hasMany(OrdemServicoProduto::class);
+    }
+
+    public function pagamentos(): HasMany
+    {
+        return $this->hasMany(Pagamento::class);
+    }
+
+    public function comissao(): HasOne
+    {
+        return $this->hasOne(Comissao::class);
+    }
+
     public function recalcularValorTotal(): void
     {
         $total = $this->itens()
@@ -103,5 +122,53 @@ class OrdemServico extends Model
             ->value('total');
 
         $this->forceFill(['valor_total' => $total])->saveQuietly();
+        $this->sincronizarComissao();
+    }
+
+    public function sincronizarComissao(): void
+    {
+        $comissao = Comissao::query()->where('ordem_servico_id', $this->getKey())->first();
+
+        if ($this->status === OrdemServicoStatus::Cancelado) {
+            if ($comissao?->status === ComissaoStatus::Pendente) {
+                $comissao->delete();
+            }
+
+            return;
+        }
+
+        if (! in_array($this->status, [OrdemServicoStatus::Concluido, OrdemServicoStatus::Entregue], true)) {
+            return;
+        }
+
+        if (! $this->funcionario_id) {
+            return;
+        }
+
+        $funcionario = $this->funcionario()->first();
+        $percentual = (float) ($funcionario?->percentual_comissao ?? 0);
+
+        if ($percentual <= 0) {
+            return;
+        }
+
+        if ($comissao?->status === ComissaoStatus::Paga) {
+            return;
+        }
+
+        $valorTotal = (float) static::query()
+            ->whereKey($this->getKey())
+            ->value('valor_total');
+
+        Comissao::query()->updateOrCreate(
+            ['ordem_servico_id' => $this->getKey()],
+            [
+                'loja_id' => $this->loja_id,
+                'funcionario_id' => $this->funcionario_id,
+                'percentual_aplicado' => $percentual,
+                'valor_comissao' => ($valorTotal * $percentual) / 100,
+                'status' => ComissaoStatus::Pendente,
+            ],
+        );
     }
 }

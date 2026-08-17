@@ -5,22 +5,22 @@ namespace Database\Seeders;
 use App\Enums\LojaStatus;
 use App\Enums\LojaUserRole;
 use App\Enums\OrdemServicoStatus;
+use App\Enums\FormaPagamento;
 use App\Models\Cliente;
 use App\Models\Funcionario;
 use App\Models\Loja;
 use App\Models\OrdemServico;
 use App\Models\OrdemServicoItem;
+use App\Models\OrdemServicoProduto;
+use App\Models\Pagamento;
 use App\Models\Produto;
 use App\Models\Servico;
 use App\Models\User;
 use App\Models\Veiculo;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
      */
@@ -114,40 +114,34 @@ class DatabaseSeeder extends Seeder
             'ativo' => true,
         ]);
 
-        Produto::query()->insert([
-            [
-                'loja_id' => $loja->id,
-                'nome' => 'Shampoo automotivo',
-                'unidade' => 'lt',
-                'quantidade_atual' => 12,
-                'quantidade_minima' => 5,
-                'preco_custo' => 38.50,
-                'ativo' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'loja_id' => $loja->id,
-                'nome' => 'Cera liquida',
-                'unidade' => 'un',
-                'quantidade_atual' => 2,
-                'quantidade_minima' => 3,
-                'preco_custo' => 52.90,
-                'ativo' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'loja_id' => $loja->id,
-                'nome' => 'Pano de microfibra',
-                'unidade' => 'un',
-                'quantidade_atual' => 25,
-                'quantidade_minima' => 10,
-                'preco_custo' => 8.90,
-                'ativo' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+        $shampoo = Produto::query()->create([
+            'loja_id' => $loja->id,
+            'nome' => 'Shampoo automotivo',
+            'unidade' => 'lt',
+            'quantidade_atual' => 12,
+            'quantidade_minima' => 5,
+            'preco_custo' => 38.50,
+            'ativo' => true,
+        ]);
+
+        $cera = Produto::query()->create([
+            'loja_id' => $loja->id,
+            'nome' => 'Cera liquida',
+            'unidade' => 'un',
+            'quantidade_atual' => 2,
+            'quantidade_minima' => 3,
+            'preco_custo' => 52.90,
+            'ativo' => true,
+        ]);
+
+        Produto::query()->create([
+            'loja_id' => $loja->id,
+            'nome' => 'Pano de microfibra',
+            'unidade' => 'un',
+            'quantidade_atual' => 25,
+            'quantidade_minima' => 10,
+            'preco_custo' => 8.90,
+            'ativo' => true,
         ]);
 
         $ana = Funcionario::query()->create([
@@ -193,6 +187,20 @@ class DatabaseSeeder extends Seeder
             'quantidade' => 1,
         ]);
 
+        OrdemServicoProduto::query()->create([
+            'ordem_servico_id' => $osAguardando->id,
+            'produto_id' => $shampoo->id,
+            'quantidade_utilizada' => 1.5,
+        ]);
+
+        Pagamento::query()->create([
+            'ordem_servico_id' => $osAguardando->id,
+            'forma_pagamento' => FormaPagamento::Pix,
+            'valor' => 90.00,
+            'data_pagamento' => now()->subHours(20),
+            'observacoes' => 'Pagamento integral via Pix.',
+        ]);
+
         $osAndamento = OrdemServico::query()->create([
             'loja_id' => $loja->id,
             'cliente_id' => $clienteMaria->id,
@@ -215,6 +223,17 @@ class DatabaseSeeder extends Seeder
             'servico_id' => $vitrificacao->id,
             'preco_unitario' => 900.00,
             'quantidade' => 1,
+        ]);
+
+        OrdemServicoProduto::query()->create([
+            'ordem_servico_id' => $osAndamento->id,
+            'produto_id' => $cera->id,
+            'quantidade_utilizada' => 1,
+        ]);
+
+        $osAndamento->update([
+            'status' => OrdemServicoStatus::Concluido,
+            'data_conclusao' => now(),
         ]);
     }
 }

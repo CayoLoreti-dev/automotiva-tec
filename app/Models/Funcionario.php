@@ -32,4 +32,9 @@ class Funcionario extends Model
     {
         return $this->hasMany(OrdemServico::class);
     }
+
+    public function comissoes(): HasMany
+    {
+        return $this->hasMany(Comissao::class);
+    }
 }

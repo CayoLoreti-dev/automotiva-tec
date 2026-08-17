@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['loja_id', 'nome', 'unidade', 'quantidade_atual', 'quantidade_minima', 'preco_custo', 'ativo'])]
 class Produto extends Model
@@ -27,6 +28,11 @@ class Produto extends Model
     public function loja(): BelongsTo
     {
         return $this->belongsTo(Loja::class);
+    }
+
+    public function ordemServicoProdutos(): HasMany
+    {
+        return $this->hasMany(OrdemServicoProduto::class);
     }
 
     public function isEstoqueBaixo(): bool
