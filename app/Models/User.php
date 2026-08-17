@@ -49,7 +49,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     public function canAccessPanel(Panel $panel): bool
     {
         return match ($panel->getId()) {
-            'master' => $this->is_super_admin,
+            'master' => (bool) $this->is_super_admin,
             'app' => $this->lojas()
                 ->where('status', '!=', LojaStatus::Suspensa->value)
                 ->exists(),

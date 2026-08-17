@@ -10,6 +10,7 @@ use App\Models\Cliente;
 use App\Models\Loja;
 use App\Models\Produto;
 use App\Models\Servico;
+use App\Models\User;
 use App\Models\Veiculo;
 use Filament\Facades\Filament;
 use Illuminate\Database\QueryException;
@@ -25,6 +26,7 @@ class CadastroBaseTest extends TestCase
     {
         $lojaA = Loja::factory()->create();
         $lojaB = Loja::factory()->create();
+        $user = User::factory()->create();
 
         $clienteA = Cliente::factory()->for($lojaA)->create();
         $clienteB = Cliente::factory()->for($lojaB)->create();
@@ -42,6 +44,7 @@ class CadastroBaseTest extends TestCase
         $produtoB = Produto::factory()->for($lojaB)->create();
 
         Filament::setCurrentPanel(Filament::getPanel('app'));
+        $this->actingAs($user);
         Filament::setTenant($lojaA);
         Filament::bootCurrentPanel();
 
