@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['nome', 'cnpj', 'plano', 'status', 'data_vencimento', 'valor_mensalidade'])]
 class Loja extends Model
@@ -30,6 +31,26 @@ class Loja extends Model
         return $this->belongsToMany(User::class)
             ->withPivot('role')
             ->withTimestamps();
+    }
+
+    public function clientes(): HasMany
+    {
+        return $this->hasMany(Cliente::class);
+    }
+
+    public function veiculos(): HasMany
+    {
+        return $this->hasMany(Veiculo::class);
+    }
+
+    public function servicos(): HasMany
+    {
+        return $this->hasMany(Servico::class);
+    }
+
+    public function produtos(): HasMany
+    {
+        return $this->hasMany(Produto::class);
     }
 
     protected function name(): Attribute

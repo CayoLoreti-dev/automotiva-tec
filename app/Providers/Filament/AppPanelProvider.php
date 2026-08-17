@@ -27,7 +27,7 @@ class AppPanelProvider extends PanelProvider
             ->id('app')
             ->path('app')
             ->login()
-            ->tenant(Loja::class)
+            ->tenant(Loja::class, ownershipRelationship: 'loja')
             ->colors([
                 'primary' => Color::Amber,
             ])
