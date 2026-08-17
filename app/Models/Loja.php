@@ -53,6 +53,16 @@ class Loja extends Model
         return $this->hasMany(Produto::class);
     }
 
+    public function funcionarios(): HasMany
+    {
+        return $this->hasMany(Funcionario::class);
+    }
+
+    public function ordensServico(): HasMany
+    {
+        return $this->hasMany(OrdemServico::class);
+    }
+
     protected function name(): Attribute
     {
         return Attribute::get(fn (): string => $this->nome);

@@ -4,8 +4,12 @@ namespace Database\Seeders;
 
 use App\Enums\LojaStatus;
 use App\Enums\LojaUserRole;
+use App\Enums\OrdemServicoStatus;
 use App\Models\Cliente;
+use App\Models\Funcionario;
 use App\Models\Loja;
+use App\Models\OrdemServico;
+use App\Models\OrdemServicoItem;
 use App\Models\Produto;
 use App\Models\Servico;
 use App\Models\User;
@@ -73,7 +77,7 @@ class DatabaseSeeder extends Seeder
             'ano' => 2021,
         ]);
 
-        Veiculo::query()->create([
+        $veiculoMaria = Veiculo::query()->create([
             'loja_id' => $loja->id,
             'cliente_id' => $clienteMaria->id,
             'placa' => 'XYZ9A87',
@@ -83,37 +87,31 @@ class DatabaseSeeder extends Seeder
             'ano' => 2023,
         ]);
 
-        Servico::query()->insert([
-            [
-                'loja_id' => $loja->id,
-                'nome' => 'Lavagem completa',
-                'descricao' => 'Lavagem externa e limpeza interna.',
-                'preco' => 90.00,
-                'duracao_estimada_minutos' => 90,
-                'ativo' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'loja_id' => $loja->id,
-                'nome' => 'Polimento tecnico',
-                'descricao' => 'Correcao de pintura em uma etapa.',
-                'preco' => 450.00,
-                'duracao_estimada_minutos' => 240,
-                'ativo' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'loja_id' => $loja->id,
-                'nome' => 'Vitrificacao',
-                'descricao' => 'Protecao ceramica de pintura.',
-                'preco' => 900.00,
-                'duracao_estimada_minutos' => 360,
-                'ativo' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+        $lavagem = Servico::query()->create([
+            'loja_id' => $loja->id,
+            'nome' => 'Lavagem completa',
+            'descricao' => 'Lavagem externa e limpeza interna.',
+            'preco' => 90.00,
+            'duracao_estimada_minutos' => 90,
+            'ativo' => true,
+        ]);
+
+        $polimento = Servico::query()->create([
+            'loja_id' => $loja->id,
+            'nome' => 'Polimento tecnico',
+            'descricao' => 'Correcao de pintura em uma etapa.',
+            'preco' => 450.00,
+            'duracao_estimada_minutos' => 240,
+            'ativo' => true,
+        ]);
+
+        $vitrificacao = Servico::query()->create([
+            'loja_id' => $loja->id,
+            'nome' => 'Vitrificacao',
+            'descricao' => 'Protecao ceramica de pintura.',
+            'preco' => 900.00,
+            'duracao_estimada_minutos' => 360,
+            'ativo' => true,
         ]);
 
         Produto::query()->insert([
@@ -150,6 +148,73 @@ class DatabaseSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+        ]);
+
+        $ana = Funcionario::query()->create([
+            'loja_id' => $loja->id,
+            'nome' => 'Ana Lima',
+            'cargo' => 'Atendente',
+            'percentual_comissao' => 5,
+            'ativo' => true,
+        ]);
+
+        $carlos = Funcionario::query()->create([
+            'loja_id' => $loja->id,
+            'nome' => 'Carlos Silva',
+            'cargo' => 'Polidor',
+            'percentual_comissao' => 12,
+            'ativo' => true,
+        ]);
+
+        Funcionario::query()->create([
+            'loja_id' => $loja->id,
+            'nome' => 'Paula Mendes',
+            'cargo' => 'Lavadora',
+            'percentual_comissao' => 8,
+            'ativo' => true,
+        ]);
+
+        $veiculoJoao = Veiculo::query()->where('placa', 'ABC1D23')->firstOrFail();
+
+        $osAguardando = OrdemServico::query()->create([
+            'loja_id' => $loja->id,
+            'cliente_id' => $clienteJoao->id,
+            'veiculo_id' => $veiculoJoao->id,
+            'funcionario_id' => $ana->id,
+            'status' => OrdemServicoStatus::Aguardando,
+            'observacoes' => 'Cliente pediu atencao especial nas rodas.',
+            'data_abertura' => now()->subDay(),
+        ]);
+
+        OrdemServicoItem::query()->create([
+            'ordem_servico_id' => $osAguardando->id,
+            'servico_id' => $lavagem->id,
+            'preco_unitario' => 90.00,
+            'quantidade' => 1,
+        ]);
+
+        $osAndamento = OrdemServico::query()->create([
+            'loja_id' => $loja->id,
+            'cliente_id' => $clienteMaria->id,
+            'veiculo_id' => $veiculoMaria->id,
+            'funcionario_id' => $carlos->id,
+            'status' => OrdemServicoStatus::EmAndamento,
+            'observacoes' => 'Polimento com vitrificacao.',
+            'data_abertura' => now()->subHours(4),
+        ]);
+
+        OrdemServicoItem::query()->create([
+            'ordem_servico_id' => $osAndamento->id,
+            'servico_id' => $polimento->id,
+            'preco_unitario' => 450.00,
+            'quantidade' => 1,
+        ]);
+
+        OrdemServicoItem::query()->create([
+            'ordem_servico_id' => $osAndamento->id,
+            'servico_id' => $vitrificacao->id,
+            'preco_unitario' => 900.00,
+            'quantidade' => 1,
         ]);
     }
 }
